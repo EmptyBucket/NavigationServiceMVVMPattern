@@ -7,11 +7,21 @@ using GalaSoft.MvvmLight.Views;
 
 namespace NavigationServiceMVVM.Model.NavigationMVVM
 {
-    public class NavigationServiceMvvm : INavigationService
+    public sealed class NavigationServiceSingletonMvvm : INavigationService
     {
-        private readonly NavigationService _navigationService;
+        private NavigationService _navigationService;
+        public NavigationService NavigationService
+        {
+            set
+            {
+                if (Service._navigationService != null)
+                    Service._navigationService.Navigated -= NavigationServiceOnNavigated;
+                Service._navigationService = value;
+                Service._navigationService.Navigated += NavigationServiceOnNavigated;
+            }
+        }
 
-        public NavigationServiceMvvm Configure(string key, Page page, ViewModelBase viewModel)
+        public NavigationServiceSingletonMvvm Configure(string key, Page page, ViewModelBase viewModel)
         {
             _pages[key] = new DataPage(page, viewModel);
             return this;
@@ -30,12 +40,12 @@ namespace NavigationServiceMVVM.Model.NavigationMVVM
 
         public void NavigateTo(string key, object parameter)
         {
-            if (_navigationService == null || !_pages.ContainsKey(key))
+            if (Service._navigationService == null || !_pages.ContainsKey(key))
                 return;
             Parameter = parameter;
             _historic.Add(key);
             var pageData = _pages[key];
-            _navigationService.Navigate(pageData.PageInstance, pageData.ViewModel);
+            Service._navigationService.Navigate(pageData.PageInstance, pageData.ViewModel);
         }
 
         public string CurrentPageKey => _historic.Last();
@@ -49,14 +59,25 @@ namespace NavigationServiceMVVM.Model.NavigationMVVM
             NavigateTo(_historic.Last());
         }
 
+        private static volatile NavigationServiceSingletonMvvm _instance;
+        private static readonly object SyncRoot = new object();
         private readonly Dictionary<string, DataPage> _pages;
 
-        public NavigationServiceMvvm(NavigationService navigationService)
+        private NavigationServiceSingletonMvvm()
         {
-            _navigationService = navigationService;
-            _navigationService.Navigated += NavigationServiceOnNavigated;
             _historic = new List<string>();
             _pages = new Dictionary<string, DataPage>();
+        }
+
+        public static NavigationServiceSingletonMvvm Service
+        {
+            get 
+            {
+                if (_instance != null) return _instance;
+                lock (SyncRoot)
+                if (_instance == null) _instance = new NavigationServiceSingletonMvvm();
+                return _instance;
+            }
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using NavigationServiceMVVM.Model.NavigationMVVM;
-using Ninject;
+﻿using Ninject;
 
 namespace NavigationServiceMVVM.ViewModel
 {
@@ -8,6 +7,7 @@ namespace NavigationServiceMVVM.ViewModel
         private static readonly StandardKernel Kernel = new StandardKernel(new CommonModule());
 
         public MainViewModel Main => Kernel.Get<MainViewModel>();
+
         public const string SecordPages = nameof(SecordPages);
         public const string FirstPage = nameof(FirstPage);
 

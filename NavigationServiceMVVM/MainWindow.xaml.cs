@@ -10,18 +10,15 @@ namespace NavigationServiceMVVM
         public MainWindow()
         {
             InitializeComponent();
-            Loaded += OnLoaded;
+            Loaded += (sender, args) =>
+            {
+                var navigationService = new NavigationServiceMvvm(MainFrame.NavigationService);
+                navigationService
+                    .Configure(ViewModelLocator.FirstPage, new Page1(), new ViewModelOne(navigationService))
+                    .Configure(ViewModelLocator.SecordPages, new Page2(), new ViewModelTwo(navigationService));
+                navigationService.NavigateTo(ViewModelLocator.FirstPage);
+            };
             Closing += (s, e) => ViewModelLocator.Cleanup();
-        }
-
-        private void OnLoaded(object sender, RoutedEventArgs routedEventArgs)
-        {
-            NavigationServiceMvvm.Service.NavigationService = MainFrame.NavigationService;
-            var navigationService = NavigationServiceMvvm.Service;
-            navigationService
-                .Configure(ViewModelLocator.FirstPage, new Page1(), new ViewModelOne(navigationService))
-                .Configure(ViewModelLocator.SecordPages, new Page2(), new ViewModelTwo(navigationService));
-            NavigationServiceMvvm.Service.NavigateTo(ViewModelLocator.FirstPage);
         }
     }
 }
