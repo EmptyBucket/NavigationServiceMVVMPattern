@@ -14,8 +14,13 @@ namespace NavigationServiceMVVM
             {
                 var navigationService = new NavigationServiceMvvm(MainFrame.NavigationService);
                 navigationService
-                    .Configure(ViewModelLocator.FirstPage, new Page1(), new ViewModelOne(navigationService))
-                    .Configure(ViewModelLocator.SecordPages, new Page2(), new ViewModelTwo(navigationService));
+                    .ConfigurePage<Page1>(ViewModelLocator.FirstPage)
+                    .WithViewModelType<ViewModelOne>()
+                    .WithViewModelArgs(new[] {navigationService});
+                navigationService
+                    .ConfigurePage<Page2>(ViewModelLocator.SecordPages)
+                    .WithViewModelType<ViewModelTwo>()
+                    .WithViewModelArgs(new[] {navigationService});
                 navigationService.NavigateTo(ViewModelLocator.FirstPage);
             };
             Closing += (s, e) => ViewModelLocator.Cleanup();
