@@ -81,7 +81,6 @@
     </ApplicationDefinition>
     <Compile Include="Model\NavigationMVVM\DataPage.cs" />
     <Compile Include="Model\NavigationMVVM\NavigationServiceMvvm.cs" />
-    <Compile Include="Model\NavigationMVVM\NavigationServiceSingletonMvvm.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="ViewModel\CommonModule.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />

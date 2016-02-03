@@ -1,26 +1,27 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Controls;
+using System.Windows;
 using System.Windows.Navigation;
-using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Views;
 
 namespace NavigationServiceMVVM.Model.NavigationMVVM
 {
     public class NavigationServiceMvvm : INavigationService
     {
-        private readonly NavigationService _navigationService;
+        private readonly System.Windows.Navigation.NavigationService _navigationService;
 
-        public NavigationServiceMvvm Configure(string key, Page page, ViewModelBase viewModel)
+        public DataPage ConfigurePage<T1>(string key) where T1 : FrameworkElement
         {
-            _pages[key] = new DataPage(page, viewModel);
-            return this;
+             _pages[key] = new DataPage(typeof(T1));
+            return _pages[key];
         }
 
         private static void NavigationServiceOnNavigated(object sender, NavigationEventArgs navigationEventArgs)
         {
-            var page = navigationEventArgs.Content as Page;
-            if (page != null)
+            var page = navigationEventArgs.Content as FrameworkElement;
+            var data = navigationEventArgs.ExtraData;
+            if (page != null && data != null)
                 page.DataContext = navigationEventArgs.ExtraData;
         }
 
@@ -30,12 +31,29 @@ namespace NavigationServiceMVVM.Model.NavigationMVVM
 
         public void NavigateTo(string key, object parameter)
         {
-            if (_navigationService == null || !_pages.ContainsKey(key))
+            if (!_pages.ContainsKey(key))
                 return;
             Parameter = parameter;
             _historic.Add(key);
             var pageData = _pages[key];
-            _navigationService.Navigate(pageData.PageInstance, pageData.ViewModel);
+
+            var pageArgs = pageData.PageArgs ?? new object[0];
+            var pageArgsTypes = pageArgs.Select(arg => arg.GetType()).ToArray();
+            var pageConstructor = pageData.PageType.GetConstructor(pageArgsTypes);
+            
+            var viewModelArgs = pageData.ViewModelArgs ?? new object[0];
+            var viewModelArgsTypes = viewModelArgs.Select(arg => arg.GetType()).ToArray();
+            var viewModelConstructor = pageData.ViewModelType.GetConstructor(viewModelArgsTypes);
+
+            if (pageConstructor == null)
+                throw new ArgumentException($"Unable to find a constructor page that takes type:{string.Join(", ", pageArgsTypes.Select(arg => arg.Name))}");
+            if(viewModelConstructor == null)
+                throw new ArgumentException($"Unable to find a constructor viewModel that takes type:{string.Join(", ", viewModelArgsTypes.Select(arg => arg.Name))}");
+
+            var pageInstance = pageConstructor.Invoke(pageArgs.ToArray());
+            var viewModelInstance = viewModelConstructor.Invoke(viewModelArgs.ToArray());
+
+            _navigationService.Navigate(pageInstance, viewModelInstance);
         }
 
         public string CurrentPageKey => _historic.Last();
@@ -51,7 +69,7 @@ namespace NavigationServiceMVVM.Model.NavigationMVVM
 
         private readonly Dictionary<string, DataPage> _pages;
 
-        public NavigationServiceMvvm(NavigationService navigationService)
+        public NavigationServiceMvvm(System.Windows.Navigation.NavigationService navigationService)
         {
             _navigationService = navigationService;
             _navigationService.Navigated += NavigationServiceOnNavigated;
