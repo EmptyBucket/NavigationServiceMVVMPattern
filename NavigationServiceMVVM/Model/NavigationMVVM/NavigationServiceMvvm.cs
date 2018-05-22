@@ -22,7 +22,7 @@ namespace NavigationServiceMVVM.Model.NavigationMVVM
             var page = navigationEventArgs.Content as FrameworkElement;
             var data = navigationEventArgs.ExtraData;
             if (page != null && data != null)
-                page.DataContext = navigationEventArgs.ExtraData;
+                page.DataContext = data;
         }
 
         private readonly List<string> _historic;
